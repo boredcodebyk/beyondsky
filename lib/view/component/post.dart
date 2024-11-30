@@ -25,99 +25,105 @@ class _PostState extends ConsumerState<Post> {
     var post = widget.post;
     var reason = widget.reason;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        // Text(widget.reason.toString()),
-        if (reason != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                if (reason.data is bsky.ReasonRepost) ...[
-                  const Icon(Icons.repeat),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                        "Reposted by ${(reason.data as bsky.ReasonRepost).by.handle == ref.watch(activeSessionProvider)?.handle ? "you" : (reason.data as bsky.ReasonRepost).by.displayName ?? (reason.data as bsky.ReasonRepost).by.handle}"),
-                  )
-                ]
-              ],
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Text(widget.reason.toString()),
+            if (reason != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    if (reason.data is bsky.ReasonRepost) ...[
+                      const Icon(Icons.repeat),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                            "Reposted by ${(reason.data as bsky.ReasonRepost).by.handle == ref.watch(activeSessionProvider)?.handle ? "you" : (reason.data as bsky.ReasonRepost).by.displayName ?? (reason.data as bsky.ReasonRepost).by.handle}"),
+                      )
+                    ]
+                  ],
+                ),
+              ),
+            ListTile(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              onTap: GoRouterState.of(context).uri.path ==
+                      '/profile/${post.author.handle}'
+                  ? null
+                  : () => context.push('/profile/${post.author.handle}'),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+              title: Text(post.author.displayName ?? ""),
+              leading: CircleAvatar(
+                foregroundImage: CachedNetworkImageProvider(
+                  post.author.avatar ??
+                      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHVzZXIlMjBwcm9maWxlfGVufDB8fDB8fHww",
+                ),
+              ),
+              subtitle: Text("@${post.author.handle}"),
             ),
-          ),
-        ListTile(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onTap: GoRouterState.of(context).uri.path ==
-                  '/profile/${post.author.handle}'
-              ? null
-              : () => context.push('/profile/${post.author.handle}'),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-          title: Text(post.author.displayName ?? ""),
-          leading: CircleAvatar(
-            foregroundImage: CachedNetworkImageProvider(
-              post.author.avatar ??
-                  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHVzZXIlMjBwcm9maWxlfGVufDB8fDB8fHww",
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                  BlueskyText(post.record.text, enableMarkdown: true).value),
             ),
-          ),
-          subtitle: Text("@${post.author.handle}"),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child:
-              Text(BlueskyText(post.record.text, enableMarkdown: true).value),
-        ),
-        if (post.embed != null)
-          Card(
-            elevation: 0,
-            clipBehavior: Clip.antiAlias,
-            child: renderEmbed(post.embed!),
-            // Image(image: Image(  "https://images.unsplash.com/photo-1579783483458-83d02161294e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHVzZXIlMjBwcm9maWxlfGVufDB8fDB8fHww  ")),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
+            if (post.embed != null)
+              Card(
+                elevation: 0,
+                clipBehavior: Clip.antiAlias,
+                child: renderEmbed(post.embed!),
+                // Image(image: Image(  "https://images.unsplash.com/photo-1579783483458-83d02161294e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHVzZXIlMjBwcm9maWxlfGVufDB8fDB8fHww  ")),
+              ),
+            Padding(      
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                      onPressed: () => handleLike(),
-                      icon: Icon(post.isLiked
-                          ? Icons.favorite
-                          : Icons.favorite_outline)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(post.likeCount.toString()),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                          onPressed: () => handleLike(),
+                          icon: Icon(post.isLiked
+                              ? Icons.favorite
+                              : Icons.favorite_outline)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(post.likeCount.toString()),
+                      ),
+                      IconButton(
+                          onPressed: () {},
+                          icon: Icon(post.isReposted
+                              ? Icons.repeat_on
+                              : Icons.repeat)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(post.repostCount.toString()),
+                      ),
+                      IconButton(
+                          onPressed: post.isReplyDisabled ? null : () {},
+                          icon: const Icon(Icons.comment_outlined)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(post.replyCount.toString()),
+                      ),
+                    ],
                   ),
                   IconButton(
-                      onPressed: () {},
-                      icon: Icon(
-                          post.isReposted ? Icons.repeat_on : Icons.repeat)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(post.repostCount.toString()),
-                  ),
-                  IconButton(
-                      onPressed: post.isReplyDisabled ? null : () {},
-                      icon: const Icon(Icons.comment_outlined)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(post.replyCount.toString()),
-                  ),
+                      onPressed: () {}, icon: const Icon(Icons.more_horiz)),
                 ],
               ),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.more_horiz)),
-            ],
-          ),
+            ),
+          ],
         ),
-        const Divider(
-          thickness: 0.6,
-        )
-      ],
+      ),
     );
   }
 

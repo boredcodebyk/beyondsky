@@ -13,158 +13,174 @@ class ProfileView extends ConsumerStatefulWidget {
   ConsumerState<ProfileView> createState() => _ProfileViewState();
 }
 
-class _ProfileViewState extends ConsumerState<ProfileView> {
-  @override
-  Widget build(BuildContext context) {
-    final bluesky = ref.watch(blueskyProvider);
+class ProfileStruct {
+  ProfileStruct({required this.feedData, required this.profileData});
+  final bsky.ActorProfile profileData;
+  final bsky.Feed feedData;
+}
 
-    AsyncValue<bsky.ActorProfile> getProfile() {
-      ref.read(profileProvider.notifier).fetchProfile(widget.handle);
-      final profile = ref.watch(profileProvider);
-      return profile;
+class _ProfileViewState extends ConsumerState<ProfileView> {
+    
+    Future<bsky.ActorProfile> getProfile() {
+      return ref.read(profileProvider.notifier).fetchProfile(widget.handle);
+      // final profile = ref.watch(profileProvider);
+      // return profile;
     }
 
     Future<bsky.Feed> getFeed() async {
+    final bluesky = ref.watch(blueskyProvider);
       final feed = await bluesky.feed.getAuthorFeed(actor: widget.handle);
       return feed.data;
     }
 
+
+  @override
+  Widget build(BuildContext context) {
+
     const expandedHeight = 240.0;
     const collapsedHeight = 64.0;
-    return Scaffold(
-      appBar: getProfile().when(
-        data: (data) => AppBar(
-          title: Text(data.displayName ?? ""),
-          actions: [
-            if (GoRouterState.of(context).uri.path == '/profile/${data.handle}')
-              IconButton(
-                onPressed: () {
-                  ref.read(activeSessionProvider.notifier).removeSession();
-                  context.go('/login');
-                },
-                icon: const Icon(Icons.logout),
-              )
-          ],
-        ),
-        error: (Object error, StackTrace stackTrace) => AppBar(),
-        loading: () => AppBar(),
-      ),
-      body: getProfile().when(
-          loading: () => const LinearProgressIndicator(),
-          data: (snapshot) {
-            return CustomScrollView(
-              slivers: <Widget>[
-                SliverToBoxAdapter(
-                  child: Stack(
-                    children: [
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: Container(
-                          height: expandedHeight - collapsedHeight,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: NetworkImage(snapshot.banner!),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: collapsedHeight - 48,
-                        left: MediaQuery.of(context).size.width / 2 - 50,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const ShapeDecoration(
-                            color: Colors.white,
-                            shape: CircleBorder(),
-                          ),
-                          child: CircleAvatar(
-                            foregroundImage: NetworkImage(snapshot.avatar!),
-                            radius: 48,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text(
-                          snapshot.displayName!,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text("@${snapshot.handle}"),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text("@${snapshot.description}"),
-                      ),
-                      Row(
+    
+        return Scaffold(
+          appBar: FutureBuilder(
+            future: getProfile(),
+            initialData: InitialData,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                return AppBar(
+              title: Text(data.displayName ?? ""),
+              actions: [
+                if (GoRouterState.of(context).uri.path == '/profile/${data.handle}')
+                  IconButton(
+                    onPressed: () {
+                      ref.read(activeSessionProvider.notifier).removeSession();
+                      context.go('/login');
+                    },
+                    icon: const Icon(Icons.logout),
+                  )
+              ],
+            ),
+              }
+              return AppBar();
+            },
+          ),
+          
+          body: getProfile().when(
+              loading: () => const LinearProgressIndicator(),
+              data: (snapshot) {
+                return CustomScrollView(
+                  slivers: <Widget>[
+                    SliverToBoxAdapter(
+                      child: Stack(
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: TextButton.icon(
-                              icon: Text("${snapshot.followersCount}"),
-                              onPressed: () {},
-                              label: Text(
-                                  "follower${snapshot.followersCount > 1 ? "s" : ""}"),
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              height: expandedHeight - collapsedHeight,
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(snapshot.banner!),
+                                ),
+                              ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: TextButton.icon(
-                              icon: Text("${snapshot.followsCount}"),
-                              onPressed: () {},
-                              label: const Text("following"),
+                          Positioned(
+                            bottom: collapsedHeight - 48,
+                            left: MediaQuery.of(context).size.width / 2 - 50,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const ShapeDecoration(
+                                color: Colors.white,
+                                shape: CircleBorder(),
+                              ),
+                              child: CircleAvatar(
+                                foregroundImage: NetworkImage(snapshot.avatar!),
+                                radius: 48,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const Divider(
-                        thickness: 0.6,
-                      ),
-                      FutureBuilder(
-                        future: getFeed(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const LinearProgressIndicator();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              physics: const ClampingScrollPhysics(),
-                              itemCount: snapshot.data?.feed.length,
-                              itemBuilder: (context, index) {
-                                var feed = snapshot.data?.feed[index];
-                                return Post(
-                                  post: feed!.post,
-                                  reason: feed.reason,
-                                );
-                              },
+                    ),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: Text(
+                              snapshot.displayName!,
+                              style: Theme.of(context).textTheme.headlineMedium,
                             ),
-                          );
-                        },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: Text("@${snapshot.handle}"),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: Text("@${snapshot.description}"),
+                          ),
+                          Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: TextButton.icon(
+                                  icon: Text("${snapshot.followersCount}"),
+                                  onPressed: () {},
+                                  label: Text(
+                                      "follower${snapshot.followersCount > 1 ? "s" : ""}"),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: TextButton.icon(
+                                  icon: Text("${snapshot.followsCount}"),
+                                  onPressed: () {},
+                                  label: const Text("following"),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(
+                            thickness: 0.6,
+                          ),
+                          FutureBuilder(
+                            future: getFeed(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const LinearProgressIndicator();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const ClampingScrollPhysics(),
+                                  itemCount: snapshot.data?.feed.length,
+                                  itemBuilder: (context, index) {
+                                    var feed = snapshot.data?.feed[index];
+                                    return Post(
+                                      post: feed!.post,
+                                      reason: feed.reason,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-              ],
-            );
-          },
-          error: (Object error, StackTrace stackTrace) =>
-              Center(child: Text(error.toString()))),
-    );
-  }
+                    )
+                  ],
+                );
+              },
+              error: (Object error, StackTrace stackTrace) =>
+                  Center(child: Text(error.toString()))),
+        );
+      }
+      
 }
