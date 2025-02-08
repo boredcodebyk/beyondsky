@@ -1,4 +1,5 @@
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,174 +14,119 @@ class ProfileView extends ConsumerStatefulWidget {
   ConsumerState<ProfileView> createState() => _ProfileViewState();
 }
 
-class ProfileStruct {
-  ProfileStruct({required this.feedData, required this.profileData});
-  final bsky.ActorProfile profileData;
-  final bsky.Feed feedData;
-}
-
 class _ProfileViewState extends ConsumerState<ProfileView> {
-    
-    Future<bsky.ActorProfile> getProfile() {
-      return ref.read(profileProvider.notifier).fetchProfile(widget.handle);
-      // final profile = ref.watch(profileProvider);
-      // return profile;
-    }
-
-    Future<bsky.Feed> getFeed() async {
-    final bluesky = ref.watch(blueskyProvider);
-      final feed = await bluesky.feed.getAuthorFeed(actor: widget.handle);
-      return feed.data;
-    }
-
-
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          leading: IconButton.filledTonal(
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.arrow_back)),
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+        ),
+        body: ref.watch(profileProvider(widget.handle)).when(
+              data: (v) {
+                bsky.ActorProfile profile = v.profileData;
+                bsky.Feed feed = v.feedData;
 
-    const expandedHeight = 240.0;
-    const collapsedHeight = 64.0;
-    
-        return Scaffold(
-          appBar: FutureBuilder(
-            future: getProfile(),
-            initialData: InitialData,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                return AppBar(
-              title: Text(data.displayName ?? ""),
-              actions: [
-                if (GoRouterState.of(context).uri.path == '/profile/${data.handle}')
-                  IconButton(
-                    onPressed: () {
-                      ref.read(activeSessionProvider.notifier).removeSession();
-                      context.go('/login');
-                    },
-                    icon: const Icon(Icons.logout),
-                  )
-              ],
-            ),
-              }
-              return AppBar();
-            },
-          ),
-          
-          body: getProfile().when(
-              loading: () => const LinearProgressIndicator(),
-              data: (snapshot) {
-                return CustomScrollView(
-                  slivers: <Widget>[
-                    SliverToBoxAdapter(
-                      child: Stack(
-                        children: [
-                          Align(
-                            alignment: Alignment.topCenter,
-                            child: Container(
-                              height: expandedHeight - collapsedHeight,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image: NetworkImage(snapshot.banner!),
-                                ),
-                              ),
-                            ),
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 156,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: CachedNetworkImageProvider(profile.banner!),
+                            fit: BoxFit.cover,
                           ),
-                          Positioned(
-                            bottom: collapsedHeight - 48,
-                            left: MediaQuery.of(context).size.width / 2 - 50,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const ShapeDecoration(
-                                color: Colors.white,
-                                shape: CircleBorder(),
-                              ),
-                              child: CircleAvatar(
-                                foregroundImage: NetworkImage(snapshot.avatar!),
-                                radius: 48,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            child: Text(
-                              snapshot.displayName!,
-                              style: Theme.of(context).textTheme.headlineMedium,
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 48,
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    profile.avatar!,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(profile.displayName!,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineLarge),
+                                      Text("@${profile.handle}",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge),
+                                      Text(
+                                          "${profile.followersCount} follower / ${profile.followsCount} following / ${profile.postsCount} posts",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium)
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            child: Text("@${snapshot.handle}"),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            child: Text("@${snapshot.description}"),
-                          ),
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: TextButton.icon(
-                                  icon: Text("${snapshot.followersCount}"),
-                                  onPressed: () {},
-                                  label: Text(
-                                      "follower${snapshot.followersCount > 1 ? "s" : ""}"),
-                                ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(profile.description ?? ""),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  FilledButton.icon(
+                                      onPressed: () {},
+                                      icon: const Icon(Icons.add),
+                                      label: const Text("Follow")),
+                                  IconButton.outlined(
+                                      onPressed: () {},
+                                      icon: const Icon(Icons.message_outlined))
+                                ],
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: TextButton.icon(
-                                  icon: Text("${snapshot.followsCount}"),
-                                  onPressed: () {},
-                                  label: const Text("following"),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            thickness: 0.6,
-                          ),
-                          FutureBuilder(
-                            future: getFeed(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) {
-                                return const LinearProgressIndicator();
-                              }
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const ClampingScrollPhysics(),
-                                  itemCount: snapshot.data?.feed.length,
-                                  itemBuilder: (context, index) {
-                                    var feed = snapshot.data?.feed[index];
-                                    return Post(
-                                      post: feed!.post,
-                                      reason: feed.reason,
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                            )
+                          ],
+                        ),
                       ),
-                    )
-                  ],
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 512),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: feed.feed.length,
+                          itemBuilder: (context, index) {
+                            var feedview = feed.feed[index];
+                            return Post(
+                              post: feedview.post,
+                              reason: feedview.reason,
+                            );
+                          },
+                        ),
+                      )
+                    ],
+                  ),
                 );
               },
-              error: (Object error, StackTrace stackTrace) =>
-                  Center(child: Text(error.toString()))),
-        );
-      }
-      
+              error: (error, stackTrace) => Text(error.toString()),
+              loading: () => LinearProgressIndicator(),
+            ));
+  }
 }

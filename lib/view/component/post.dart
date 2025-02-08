@@ -29,37 +29,30 @@ class _PostState extends ConsumerState<Post> {
       elevation: 0,
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Text(widget.reason.toString()),
             if (reason != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    if (reason.data is bsky.ReasonRepost) ...[
-                      const Icon(Icons.repeat),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                            "Reposted by ${(reason.data as bsky.ReasonRepost).by.handle == ref.watch(activeSessionProvider)?.handle ? "you" : (reason.data as bsky.ReasonRepost).by.displayName ?? (reason.data as bsky.ReasonRepost).by.handle}"),
-                      )
-                    ]
-                  ],
-                ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(Icons.repeat),
+                onTap: gotoProfile(
+                    context, (reason.data as bsky.ReasonRepost).by.handle),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                title: Text(
+                    "Reposted by ${(reason.data as bsky.ReasonRepost).by.handle == ref.watch(activeSessionProvider)?.handle ? "you" : (reason.data as bsky.ReasonRepost).by.displayName ?? (reason.data as bsky.ReasonRepost).by.handle}"),
               ),
             ListTile(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              onTap: GoRouterState.of(context).uri.path ==
-                      '/profile/${post.author.handle}'
-                  ? null
-                  : () => context.push('/profile/${post.author.handle}'),
+              onTap: gotoProfile(context, post.author.handle),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               title: Text(post.author.displayName ?? ""),
               leading: CircleAvatar(
                 foregroundImage: CachedNetworkImageProvider(
@@ -81,7 +74,7 @@ class _PostState extends ConsumerState<Post> {
                 child: renderEmbed(post.embed!),
                 // Image(image: Image(  "https://images.unsplash.com/photo-1579783483458-83d02161294e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHVzZXIlMjBwcm9maWxlfGVufDB8fDB8fHww  ")),
               ),
-            Padding(      
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -125,6 +118,12 @@ class _PostState extends ConsumerState<Post> {
         ),
       ),
     );
+  }
+
+  Future<Object?> Function()? gotoProfile(BuildContext context, String handle) {
+    return GoRouterState.of(context).uri.path == '/profile/$handle'
+        ? null
+        : () => context.push('/profile/$handle');
   }
 
   Widget renderEmbed(bsky.EmbedView embedView) {

@@ -32,7 +32,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   TextButton(
@@ -42,17 +42,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     onRefresh: () => ref.refresh(feedProvider.future),
                     child: feedList.when(
                       data: (item) => item != null
-                          ? ListView.builder(
-                              shrinkWrap: true,
-                              physics: const ClampingScrollPhysics(),
-                              itemCount: item.length,
-                              itemBuilder: (context, index) {
-                                var feedview = item[index];
-                                return Post(
-                                  post: feedview.post,
-                                  reason: feedview.reason,
-                                );
-                              },
+                          ? ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 512),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const ClampingScrollPhysics(),
+                                itemCount: item.length,
+                                itemBuilder: (context, index) {
+                                  var feedview = item[index];
+                                  return Post(
+                                    post: feedview.post,
+                                    reason: feedview.reason,
+                                  );
+                                },
+                              ),
                             )
                           : Text("login"),
                       error: (error, StackTrace stackTrace) {

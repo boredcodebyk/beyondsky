@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,21 @@ class SessionNotifier extends Notifier<Session?> {
       },
     );
     return currentSession;
+  }
+
+  void login(String identifier, String password) async {
+    try {
+      var session = await createSession(
+        identifier: identifier,
+        password: password,
+      );
+      addSession(session.data);
+      print(session.data);
+    } on UnauthorizedException catch (e) {
+      // TODO
+    } on XRPCException catch (e) {
+      // TODO
+    }
   }
 
   void addSession(Session session) {
@@ -59,7 +75,7 @@ final fetchFeedProvider = FutureProvider<List<FeedView>>((ref) async {
   return feedList;
 });
 
-class FeedNotifier extends AsyncNotifier<List<FeedView>?> {
+class FeedNotifier extends AutoDisposeAsyncNotifier<List<FeedView>?> {
   Future<List<FeedView>?> fetchFollowingFeed() async {
     try {
       final feeds = await ref.watch(getfeedProvider.future);
@@ -74,7 +90,8 @@ class FeedNotifier extends AsyncNotifier<List<FeedView>?> {
 
   @override
   Future<List<FeedView>?> build() async {
-    return fetchFollowingFeed();
+    List<FeedView>? feedList = await fetchFollowingFeed();
+    return feedList;
   }
 
   Future<void> likePost(Post post) async {
@@ -95,7 +112,8 @@ class FeedNotifier extends AsyncNotifier<List<FeedView>?> {
 }
 
 final feedProvider =
-    AsyncNotifierProvider<FeedNotifier, List<FeedView>?>(() => FeedNotifier());
+    AsyncNotifierProvider.autoDispose<FeedNotifier, List<FeedView>?>(
+        () => FeedNotifier());
 
 // final profileProvider = FutureProvider<ActorProfile>((ref) async {
 //   final bluesky = ref.watch(blueskyProvider);
@@ -117,5 +135,33 @@ class ProfileNotifier extends AsyncNotifier<ActorProfile> {
   }
 }
 
-final profileProvider =
-    AsyncNotifierProvider<ProfileNotifier, ActorProfile>(ProfileNotifier.new);
+class ProfileStruct {
+  ProfileStruct({required this.feedData, required this.profileData});
+  final ActorProfile profileData;
+  final Feed feedData;
+}
+
+class ProfileFeedNotifier
+    extends AutoDisposeFamilyAsyncNotifier<ProfileStruct, String> {
+  Future<ActorProfile> fetchProfile(String handle) async {
+    final bluesky = ref.watch(blueskyProvider);
+    final profile = await bluesky.actor.getProfile(actor: handle);
+    return profile.data;
+  }
+
+  Future<Feed> fetchProfileFeed(String handle) async {
+    final bluesky = ref.watch(blueskyProvider);
+    final profileFeed = await bluesky.feed.getAuthorFeed(actor: handle);
+    return profileFeed.data;
+  }
+
+  @override
+  Future<ProfileStruct> build(String arg) async {
+    return ProfileStruct(
+        feedData: await fetchProfileFeed(arg),
+        profileData: await fetchProfile(arg));
+  }
+}
+
+final profileProvider = AutoDisposeAsyncNotifierProviderFamily<
+    ProfileFeedNotifier, ProfileStruct, String>(ProfileFeedNotifier.new);
