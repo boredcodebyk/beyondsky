@@ -35,9 +35,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  TextButton(
-                      onPressed: () => context.go('/login'),
-                      child: const Text("Login")),
                   RefreshIndicator(
                     onRefresh: () => ref.refresh(feedProvider.future),
                     child: feedList.when(

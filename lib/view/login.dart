@@ -26,21 +26,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
     setState(() => isLoading = true);
     if (isValidAppPassword(appPassController.text)) {
       try {
-        var session = await createSession(
-            identifier: identifierController.text,
-            password: appPassController.text,
-            service: switch (host) {
-              0 => "bsky.social",
-              1 => serverAddressController.text,
-              _ => "bsky.social"
-            });
+        ref
+            .read(activeSessionProvider.notifier)
+            .login(identifierController.text, appPassController.text);
         ref
             .read(storageServiceProvider)
             .addLogin(identifierController.text, appPassController.text);
-        ref.read(activeSessionProvider.notifier).addSession(session.data);
+
         navigatorKey.currentContext!.go('/');
         setState(() => isLoading = false);
-        print(session);
       } on UnauthorizedException catch (e) {
         setState(() => isLoading = false);
         showDialog(

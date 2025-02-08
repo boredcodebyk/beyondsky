@@ -147,7 +147,13 @@ class _PostState extends ConsumerState<Post> {
                           ))
                       .toList()),
             )
-          : CachedNetworkImage(imageUrl: images.data.images.first.thumbnail);
+          : SizedBox(
+              width: double.maxFinite,
+              child: CachedNetworkImage(
+                imageUrl: images.data.images.first.thumbnail,
+                fit: BoxFit.cover,
+              ),
+            );
     }
 
     Widget handleQuote(bsky.UEmbedViewRecord embedView) {

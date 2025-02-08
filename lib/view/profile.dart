@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../provider/bsky.dart';
 import 'component/post.dart';
@@ -17,14 +18,27 @@ class ProfileView extends ConsumerStatefulWidget {
 class _ProfileViewState extends ConsumerState<ProfileView> {
   @override
   Widget build(BuildContext context) {
+    final bluesky = ref.watch(blueskyProvider);
+
     return Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          leading: IconButton.filledTonal(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back)),
+          leading: bluesky.session!.handle == widget.handle
+              ? null
+              : IconButton.filledTonal(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back)),
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
+          actions: [
+            IconButton.filledTonal(
+              onPressed: () {
+                ref.read(activeSessionProvider.notifier).removeSession();
+                context.go('/login');
+              },
+              icon: const Icon(Icons.logout),
+            )
+          ],
         ),
         body: ref.watch(profileProvider(widget.handle)).when(
               data: (v) {
@@ -90,18 +104,64 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  FilledButton.icon(
-                                      onPressed: () {},
-                                      icon: const Icon(Icons.add),
-                                      label: const Text("Follow")),
-                                  IconButton.outlined(
-                                      onPressed: () {},
-                                      icon: const Icon(Icons.message_outlined))
-                                ],
-                              ),
+                              child: bluesky.session!.handle == widget.handle
+                                  ? Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      children: [
+                                        FilledButton.icon(
+                                            onPressed: () {},
+                                            icon: const Icon(Icons.edit),
+                                            label: const Text("Edit")),
+                                        IconButton.outlined(
+                                            onPressed: () => showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      AlertDialog(
+                                                    content: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        minHeight: 64,
+                                                        minWidth: 64,
+                                                        maxHeight: 128,
+                                                        maxWidth: 128,
+                                                      ),
+                                                      child: QrImageView(
+                                                          data:
+                                                              "https://${bluesky.service}/${profile.handle}"),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                          onPressed: () {},
+                                                          child: Text("Scan")),
+                                                      TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop(),
+                                                          child: Text("Close")),
+                                                    ],
+                                                  ),
+                                                ),
+                                            icon: const Icon(Icons.qr_code))
+                                      ],
+                                    )
+                                  : Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      children: [
+                                        FilledButton.icon(
+                                            onPressed: () {},
+                                            icon: const Icon(Icons.add),
+                                            label: const Text("Follow")),
+                                        IconButton.outlined(
+                                            onPressed: () {},
+                                            icon: const Icon(
+                                                Icons.message_outlined))
+                                      ],
+                                    ),
                             )
                           ],
                         ),

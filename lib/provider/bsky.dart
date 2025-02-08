@@ -41,6 +41,7 @@ class SessionNotifier extends Notifier<Session?> {
       // TODO
     } on XRPCException catch (e) {
       // TODO
+      print(e);
     }
   }
 
@@ -114,12 +115,6 @@ class FeedNotifier extends AutoDisposeAsyncNotifier<List<FeedView>?> {
 final feedProvider =
     AsyncNotifierProvider.autoDispose<FeedNotifier, List<FeedView>?>(
         () => FeedNotifier());
-
-// final profileProvider = FutureProvider<ActorProfile>((ref) async {
-//   final bluesky = ref.watch(blueskyProvider);
-//   final profile = await bluesky.actor.getProfile(actor: bluesky.session!.did);
-//   return profile.data;
-// });
 
 class ProfileNotifier extends AsyncNotifier<ActorProfile> {
   Future<ActorProfile> fetchProfile(String handle) async {
