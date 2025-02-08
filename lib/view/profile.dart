@@ -119,17 +119,20 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                                                   context: context,
                                                   builder: (context) =>
                                                       AlertDialog(
-                                                    content: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        minHeight: 64,
-                                                        minWidth: 64,
-                                                        maxHeight: 128,
-                                                        maxWidth: 128,
-                                                      ),
-                                                      child: QrImageView(
-                                                          data:
-                                                              "https://${bluesky.service}/${profile.handle}"),
+                                                    content: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        SizedBox(
+                                                          height: 128,
+                                                          width: 128,
+                                                          child: QrImageView(
+                                                            data:
+                                                                "https://${bluesky.service}/${profile.handle}",
+                                                            size: 128,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                     actions: [
                                                       TextButton(

@@ -40,7 +40,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     child: feedList.when(
                       data: (item) => item != null
                           ? ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: 512),
+                              constraints: const BoxConstraints(maxWidth: 512),
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 physics: const ClampingScrollPhysics(),
